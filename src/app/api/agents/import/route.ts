@@ -64,9 +64,40 @@ export async function POST(request: NextRequest) {
         const id = uuidv4();
         const workspaceId = agentReq.workspace_id || 'default';
 
+        // Generate default identity files referencing the gateway agent.
+        // The gateway does not expose SOUL.md/USER.md/AGENTS.md via its API,
+        // so we populate sensible defaults that prompt the user to paste their
+        // existing content from the OpenClaw workspace.
+        const soulMd = [
+          `# ${agentReq.name}`,
+          '',
+          `Imported from OpenClaw Gateway (agent: ${agentReq.gateway_agent_id}).`,
+          '',
+          'Configure this agent\'s personality, values, and communication style here.',
+          'If this agent has a SOUL.md in your OpenClaw workspace, paste its contents here.',
+        ].join('\n');
+
+        const userMd = [
+          '# User Context',
+          '',
+          `Imported from OpenClaw Gateway (agent: ${agentReq.gateway_agent_id}).`,
+          '',
+          'Add context about the human this agent works with.',
+          'If this agent has a USER.md in your OpenClaw workspace, paste its contents here.',
+        ].join('\n');
+
+        const agentsMd = [
+          '# Team Roster',
+          '',
+          `Imported from OpenClaw Gateway (agent: ${agentReq.gateway_agent_id}).`,
+          '',
+          'Describe the other agents this agent collaborates with.',
+          'If this agent has an AGENTS.md in your OpenClaw workspace, paste its contents here.',
+        ].join('\n');
+
         run(
-          `INSERT INTO agents (id, name, role, description, avatar_emoji, is_master, workspace_id, model, source, gateway_agent_id, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO agents (id, name, role, description, avatar_emoji, is_master, workspace_id, soul_md, user_md, agents_md, model, source, gateway_agent_id, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             id,
             agentReq.name,
@@ -75,6 +106,9 @@ export async function POST(request: NextRequest) {
             '🔗',
             0,
             workspaceId,
+            soulMd,
+            userMd,
+            agentsMd,
             agentReq.model || null,
             'gateway',
             agentReq.gateway_agent_id,
