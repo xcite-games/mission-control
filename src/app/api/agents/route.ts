@@ -10,7 +10,16 @@ export async function GET(request: NextRequest) {
     const workspaceId = request.nextUrl.searchParams.get('workspace_id');
     
     let agents: Agent[];
-    if (workspaceId) {
+    if (workspaceId === 'default') {
+      // Studio (default) is a panoramic view — show ALL gateway-imported agents
+      // regardless of which department workspace they're assigned to,
+      // plus any agents explicitly assigned to the default workspace.
+      agents = queryAll<Agent>(`
+        SELECT * FROM agents
+        WHERE gateway_agent_id IS NOT NULL OR workspace_id = 'default'
+        ORDER BY is_master DESC, name ASC
+      `);
+    } else if (workspaceId) {
       agents = queryAll<Agent>(`
         SELECT * FROM agents WHERE workspace_id = ? ORDER BY is_master DESC, name ASC
       `, [workspaceId]);

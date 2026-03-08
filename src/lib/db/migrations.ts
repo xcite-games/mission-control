@@ -621,6 +621,33 @@ const migrations: Migration[] = [
 
       console.log('[Migration 013] Fresh start complete');
     }
+  },
+  {
+    id: '014',
+    name: 'studio_panoramic_cleanup',
+    up: (db) => {
+      // 1. Delete phantom agents — bootstrap/local agents with no gateway link.
+      //    These are created by Migration 013 and workspace bootstrap but are not
+      //    real XCITE studio agents. They cause the "56 agents" duplication issue.
+      const deleted = db.prepare(
+        "DELETE FROM agents WHERE gateway_agent_id IS NULL OR gateway_agent_id = ''"
+      ).run();
+      console.log(`[Migration 014] Deleted ${deleted.changes} phantom agent(s)`);
+
+      // 2. Add unique partial index on gateway_agent_id to prevent future duplicates.
+      //    NULLs are allowed (for any future local agents), but non-NULL values must be unique.
+      db.exec(`
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_agents_gateway_unique
+        ON agents(gateway_agent_id) WHERE gateway_agent_id IS NOT NULL
+      `);
+      console.log('[Migration 014] Added unique index on gateway_agent_id');
+
+      // 3. Rename default workspace to "Studio" to match XCITE terminology.
+      db.prepare(
+        "UPDATE workspaces SET name = 'Studio', icon = '🏢' WHERE id = 'default'"
+      ).run();
+      console.log('[Migration 014] Renamed default workspace to Studio');
+    }
   }
 ];
 
