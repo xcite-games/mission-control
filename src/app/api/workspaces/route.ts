@@ -51,10 +51,14 @@ export async function GET(request: NextRequest) {
           counts.total += tc.count;
         });
         
-        // Get agent count
-        const agentCount = db.prepare(
-          'SELECT COUNT(*) as count FROM agents WHERE workspace_id = ?'
-        ).get(workspace.id) as { count: number };
+        // Get agent count — Studio (default) shows all gateway agents panoramically
+        const agentCount = workspace.id === 'default'
+          ? db.prepare(
+              "SELECT COUNT(*) as count FROM agents WHERE gateway_agent_id IS NOT NULL OR workspace_id = 'default'"
+            ).get() as { count: number }
+          : db.prepare(
+              'SELECT COUNT(*) as count FROM agents WHERE workspace_id = ?'
+            ).get(workspace.id) as { count: number };
         
         return {
           id: workspace.id,
