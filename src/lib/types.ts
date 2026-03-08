@@ -292,6 +292,7 @@ export interface CreateAgentRequest {
   description?: string;
   avatar_emoji?: string;
   is_master?: boolean;
+  workspace_id?: string;
   soul_md?: string;
   user_md?: string;
   agents_md?: string;
