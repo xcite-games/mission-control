@@ -105,7 +105,7 @@ export default function SchedulesPage() {
     }
   };
 
-  const owners = [...new Set(crons.map(c => c.owner))].sort();
+  const owners = Array.from(new Set(crons.map(c => c.owner))).sort();
   const successCount = crons.filter(c => c.last_status === 'success').length;
   const errorCount = crons.filter(c => c.last_status === 'error').length;
   const unknownCount = crons.filter(c => !c.last_status).length;
